@@ -11,14 +11,23 @@ This assignment makes use of data from a personal activity monitoring device. Th
 
 Data is imported from  "activity.csv" and the date is transformed
 
-```{r}
+
+```r
 activity<-read.csv("activity.csv", header = TRUE)
 str(activity)
 ```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 date column is converted to date class using the below code
 
-```{r}
+
+```r
 activity<-transform(activity, date = as.Date(date,"%Y-%m-%d"))
 ```
 
@@ -27,22 +36,32 @@ activity<-transform(activity, date = as.Date(date,"%Y-%m-%d"))
 
 ### Calculate the total number of steps taken per day
 
-```{r}
+
+```r
 act_day<-aggregate(activity$steps, by = list(activity$date), sum)
 names(act_day)<-c("Date","Steps") #renaming the columns
 ```
 
 ### Histogram of the total number of steps taken each day
 
-```{r}
+
+```r
 hist(act_day$Steps, col = "green", main = "Total number of steps", xlab = "Number of 
 steps")
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
+
 ### Mean and median number of steps taken each day
 
-```{r}
+
+```r
 summary(act_day$Steps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##      41    8841   10760   10770   13290   21190       8
 ```
 
 The mean and median values can be found in the above summary
@@ -51,21 +70,43 @@ The mean and median values can be found in the above summary
 
 ## Calculate the average steps per 5 minute interval and create a time series plot
 
-```{r}
+
+```r
 act_interval<-aggregate(activity$steps, by = list(activity$interval), mean, na.rm=TRUE)
 names(act_interval) <- c("Interval", "Steps")
 
 library(ggplot2)
-g<-ggplot(act_interval, aes(Interval,Steps))
-g + geom_line(aes(color = "red")) + labs(title = "Average steps by Interval")
+```
 
 ```
+## Warning: package 'ggplot2' was built under R version 3.2.5
+```
+
+```r
+g<-ggplot(act_interval, aes(Interval,Steps))
+g + geom_line(aes(color = "red")) + labs(title = "Average steps by Interval")
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
 
 ##The 5-minute interval that, on average, contains the maximum number of steps
 
-```{r}
+
+```r
 which.max(act_interval$Steps) # this will give the row which has the highest average number of steps
+```
+
+```
+## [1] 104
+```
+
+```r
 act_interval[which.max(act_interval$Steps),] #using the above function will give the Interval and highest average
+```
+
+```
+##     Interval    Steps
+## 104      835 206.1698
 ```
 
 ## Imputing missing values
@@ -74,14 +115,22 @@ act_interval[which.max(act_interval$Steps),] #using the above function will give
 
 This can be determined using multiple ways like summary, is.na functions etc. I have used complete.cases to find this out.
 
-```{r}
+
+```r
 table(complete.cases(activity)) # to determine the number of complete cases
+```
+
+```
+## 
+## FALSE  TRUE 
+##  2304 15264
 ```
 
 ### Fill missing values
 I have used the average of 5 minute interval to update the NA values
 
-```{r}
+
+```r
 activity_updated<-activity
 for(i in 1:nrow(activity_updated)){
     if(is.na(activity_updated[i, 1])){
@@ -93,17 +142,34 @@ for(i in 1:nrow(activity_updated)){
 
 ### Historam with the updated dataset
 
-```{r}
+
+```r
 act_day_up<-aggregate(activity_updated$steps, by = list(activity_updated$date), sum)
 names(act_day_up)<-c("Date","Steps") #renaming the columns
 hist(act_day_up$Steps, col = "green", main = "Total number of steps", xlab = "Number of steps")
 ```
 
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+
 ### comparison of mean and median of the 2 datasets
 
-```{r}
+
+```r
 summary(act_day$Steps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##      41    8841   10760   10770   13290   21190       8
+```
+
+```r
 summary(act_day_up$Steps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10770   10770   12810   21190
 ```
 
 There is no change in the mean, but the median has gone up slightly
@@ -112,7 +178,8 @@ There is no change in the mean, but the median has gone up slightly
 
 ### creating dataset with indicators for daytype - weekday/weekend
 
-```{r}
+
+```r
 activity_updated$daytype<- ifelse(weekdays(activity_updated$date) %in% c("Saturday", "Sunday"), "weekend", "weekday")
 
 act_weekday<-activity_updated[activity_updated$daytype == "weekday", ]
@@ -127,15 +194,17 @@ names(act_weekend_int)<-c("Interval", "Steps")
 act_weekend_int$daytype<-"weekend"
 
 act_week_int<-rbind(act_weekday_int,act_weekend_int)
-
 ```
 
 
 ### Panel plot to show average number of steps taken, averaged across all weekday days or weekend days 
 
-```{r}
+
+```r
 g<-ggplot(act_week_int, aes(Interval,Steps))
 g + geom_line(aes(color = "red")) + labs(title = "Average steps by Weekday/Weekend") + facet_grid(daytype~.)
 ```
+
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
 
 We observe that there is more activity over the weekdays compared to the weekend.
